@@ -15,7 +15,7 @@ model = genai.GenerativeModel(model_name="gemini-1.5-flash")
 
 app = Flask(__name__)
 
-CORS(app)
+CORS(app, origins=["https://ampli5-gaharivatsagmailcoms-projects.vercel.app/"])
 
 @app.route('/resume_enhance', methods=['POST'])
 def process_pdf():
