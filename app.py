@@ -15,11 +15,12 @@ api_key = os.getenv("GENAI_API_KEY")
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel(model_name="gemini-1.5-flash")
 
-print(f"API Key: {api_key}")  # Remove or comment this line after testing
+  # Remove or comment this line after testing
 
 # Initialize Flask app
 app = Flask(__name__)
 
+app.logger.debug(f"API Key: {api_key}")
 # Allow CORS only for the specified origin
 CORS(app, origins=["https://ampli5.vercel.app"])
 
@@ -113,22 +114,27 @@ def compare():
     try:
         # Ensure both 'resume' and 'jd' files are provided
         if 'resume' not in request.files or 'jd' not in request.files:
+            app.logger.error("Both resume and job description files must be provided")
             return jsonify({"error": "Both resume and job description files must be provided"}), 400
 
         # Extract text from the resume
         resume_file = request.files['resume']
         resume_stream = io.BytesIO(resume_file.read())
         resume_text = extract_text_from_pdf(resume_stream)
+        app.logger.debug(f"Extracted resume text: {resume_text[:100]}...")
 
         if not resume_text:
+            app.logger.error("Failed to extract text from resume PDF")
             return jsonify({"error": "Failed to extract text from resume PDF"}), 400
 
         # Extract text from the job description
         jd_file = request.files['jd']
         jd_stream = io.BytesIO(jd_file.read())
         jd_text = extract_text_from_pdf(jd_stream)
+        app.logger.debug(f"Extracted JD text: {jd_text[:100]}...")
 
         if not jd_text:
+            app.logger.error("Failed to extract text from job description PDF")
             return jsonify({"error": "Failed to extract text from job description PDF"}), 400
 
         # Generate content using the generative AI model
@@ -154,12 +160,15 @@ def compare():
 
         # Convert the cleaned string back to a JSON object
         json_response = json.loads(generated_text)
+        app.logger.debug(f"Generated response: {json_response}")
 
         # Return the AI-generated analysis as a JSON object
         return jsonify(json_response)
 
     except Exception as e:
+        app.logger.error(f"Exception occurred: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)
